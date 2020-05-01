@@ -1,17 +1,24 @@
 # epub2text
 epub2text
 
+Simple bash script which uses the program 'epub2txt' from https://github.com/kevinboone/epub2txt2
+to create separate '.txt' files from a folder of epubs, and put them into a sub-directory called 'txt'.
+All the original epubs remain intact.
+This processes epubs up to 350X faster than the 'ebook-convert' tool from calibre.
+
 I don't know how to make an install yet so it has to be done manually
 
 
-To install as a terminal function copy the epubtotext_function file so you can type in terminal:
+To install as a terminal function copy the 'epubtotext' file so you can type in terminal:
 
 epub2text path/to/epub/folder
 
+to convert epubs into txt
 
-Otherwise it's easier to install as simply a bash script using the epubtotext file.
 
-where you will have to go into the file and edit path_books='full/path/to/your/epub/folder' for it to work
+Otherwise it's easier to simply install as a bash script using the 'epub2text' file.
+
+you will have to go into the file and edit path_books='full/path/to/your/epub/folder' for it to work
 
 1.
 put the bash script 'epubtotext' into your #!/bin/bash folder or somewhere else into your $PATH.
