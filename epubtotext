@@ -1,0 +1,62 @@
+
+#!/bin/bash
+epub2text () {
+path_books="$@"								# path to directory with epubs for converting
+
+dir_txt="txt"								# name of new directory which will contain converted txt files
+
+cd "$path_books" &&							# cwd to books
+
+mkdir "$dir_txt" &&							# make new subdirectory called '$dir_txt'
+append_path="/$dir_txt/"						# append path of books to include subdirectory name
+path_txt="$path_books$append_path"					# path to new subdirectory
+
+time_start="$(date -u +%s.%N)"						# timestamp: start of conversion
+
+for book_epub in *.epub; do						# finds epubs in cwd ie. $path_books
+	book_txt="$(basename "$book_epub" .epub).txt"			# basename strips pathname: "path/to/book.epub" to "book"
+	echo "Converting $book_epub";					# prints "converting + nameOfBook"
+	epub2txt --raw "$book_epub" > "$dir_txt/$book_txt" &		# 'epub2txt' converts epubs straight to terminal as text: https://github.com/kevinboone/epub2txt2
+done &&									# > pipes output of 'epub2txt' into new files that retain their filename appended with
+									# with '.txt' instead of '.epub' and puts them straight into new subdirectory called '$dir_txt'
+
+time_end="$(date -u +%s.%N)"						# timestamp: end of conversion
+elapsedt="$(bc <<<"$time_end-$time_start")"				# total time of conversion
+echo "Total time $elapsedt seconds"					# print out total time
+}
+
+<<COMMENT
+	Had a hard time finding out how to run items in parallel and how to save output as dynamically named '.txt' documents.
+	The output of epub2txt simply produces a long stream of text and needs to be outputted into a file
+	'> file.txt' would output all the '.epub' files into one huge file called 'file.txt', which you could do if you wanted
+	to have all the data in one file for text processing, saving access time. You could do this for all the books
+	of one author to make a list of every word they have ever written or to find patterns in their style.
+	
+	Running commands in parallel:
+	The most important character in the script is the '&' symbol at the end of the last line of the for-loop.
+	It signals to the shell to run each result from the for-loop in a separate subshell, and therefore it 
+	does not wait for the previous file to finish processing before starting the next file in the for-loop 
+	ie. it runs each item found by the for-loop in parallel! So it will go as fast as your computer can handle it
+
+	Logical symbols:
+	'&&' is the logical 'and' symbol and requires previous command to return 0 as it's exit status before continuing
+	to the next command. It is a more appropriate way of separating commands that are required to run before 
+	executing the next command, as ';' at the end of a line will always return an exit status of 0 and run the 
+	next command regardless whether previous command completed successfully or unsuccessfully.
+	
+	';' is useful in the for-loop as you want each of the commands to run sequencially but you don't want the loop
+	to stop if it runs into an error with one of the files such as a file has '.epub' ending but is not in fact
+	a '.epub' file
+
+	'&' is put at the end of a command line instead of ';' which signals the shell to run command in a separate subshell
+	to the current shell
+	ie. command1 & command2
+	command1 will be run in a separate subshell and command2 will be run instantly after command1 in the current shell
+	eg2. command1 & command2 &
+	both command1 and command2 will be run in separate subshells to current shell
+	
+	'||' is the logical 'or' symbol, which will only run if previous command was unsuccessful ie returns an exit status 
+	of anything else except for 0
+
+	both '&&' and '||' have the equal highest precedence, followed equally by '&' and ';'
+COMMENT

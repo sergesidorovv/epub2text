@@ -1,0 +1,205 @@
+#!/bin/bash
+
+#BOOK SOURCE PATH - path to the folder with the epubs
+bookSrc="/mnt/c/python/book"
+#I'M USING WSL (windows subsystem linux) SO THAT'S WHY PATH HAS "/mnt/" IN IT
+
+#TXT PATH - TO APPEND ONTO bookSrc FOR NEW .txt FILES FOLDER
+txtDir="/txt/"
+
+#NEW TXT DIRECTORY PATH - full path to new folder called txt,
+# which is combination path of bookSrc and txtApp
+txtDir="$bookSrc$txtDir"
+
+<<COMMENT
+    VARIABLE="command"
+
+    $VARIABLE is all you need to do to call VARIABLE
+    you simply put the $ sign in front of the variable name you have made to call it
+COMMENT
+
+#TIMESTAMP START OF OPERATION
+start_time="$(date -u +%s.%N)"
+<<COMMENT
+    date    is basic command in bash, -u is option to use UTC time instead of local time
+
+    +       used to signal to date command that you want time in following format
+
+    %s      is seonds
+
+    %N      is nanoseconds
+
+    .       is simply a point character to separate seconds from nanoseconds correctly
+
+    command is packaged as VARIABLE="$(command)", which is correct c syntax
+
+    can also be written as: start_time=$(date -u +"%s.%N")
+
+    more can be found here:
+    http://man7.org/linux/man-pages/man1/date.1.html
+COMMENT
+
+
+#CHANGE CURRENT WORKING DIRECTORY TO SPECIFIED FOLDER WITH EPUBS
+cd "$bookSrc" &&
+<<COMMENT
+    cd          change directory - cd path/to/directory is the format
+
+    "$bookSrc"  is simply calling the variable bookSrc
+
+    &&          is the logical "and" symbol
+COMMENT
+
+
+#MAIN LINE IN SCRIPT - CREATES .txt FILES FROM .epub FILES
+for book in *.epub; do echo "Converting $book";
+epub2txt --raw "$book" > "$(basename "$book" .epub).txt"; done &&
+<<COMMENT
+    - Looks for .epub files in directory,
+    - Prints out "converting {name of book}" for each book
+    - Converts each .epub to RAW txt output using epub2txt program,
+    - For each book the RAW output of epub2txt is sent to a new file called {name of book}.txt
+COMMENT
+#In-depth explanation of script
+<<COMMENT
+    for book in *.epub; do - basic for-loop, for each book in CWD named *.epub do
+
+    epub2txt --raw "$book" > "$(basename "$book" .epub).txt"
+
+    epub2txt        is a program downloaded from https://github.com/kevinboone/epub2txt2
+                    it converts epubs to strings which are outputted directly to the terminal
+
+    --raw           this is an option of the epub2txt program which stops it reformatting
+                    the output text to suit the terminal window size, as it wastes processing
+                    time in this case.
+
+    "$book"         this is the variable which is returned by the for-loop
+                    in this case it is the file which is currently being used
+                    as the epub2txt requires an input file at this point "$book"
+                    is that input file
+
+    >               redirects output
+    > FILE          redirects output to file named FILE
+    > "$book"       would redirect output to file with the same name as $book
+                    which would be a problem as it is the same as the orginal filename
+
+    basename        is a command to convert pathname to filename
+
+    basename PATHNAME [suffix]
+    where PATHNAME is the full path name of a file such as is returned by for-loops
+
+    the suffix is the file type but it will remove whatever you put in this spot
+    from the end of the filename.
+
+    eg.
+    book="full/path/nameOfBook.epub"
+    basename $book .epub
+
+    "full/path/" will be removed from start of $book and ".epub" will be
+    removed from end of $book, leaving you with nameOfBook
+
+    (basename $book .epub) = nameOfBook
+
+    "$(basename $book .epub).txt" = nameOfBook.txt
+COMMENT
+
+#TIMESTAMP FOR END OF MAIN CONVERTING OPERATION
+end_time="$(date -u +%s.%N)"
+
+#MAKE A NEW DIRECTORY CALLED txt
+mkdir 'txt' &&
+
+#FIND ALL .txt FILES AND MOVE THEM TO NEW txt DIRECTORY
+find -type f -name '*.txt' -exec mv {} $txtDir \;
+
+<<COMMENT
+
+	find -type f -name '*.txt' -exec  {}  \;
+
+	the above is all part of the find command
+
+find		is the command name find
+
+-type f 	tells it to only look for regular files
+
+-name '*.txt'	tells find to only look for things that have .txt in the name
+
+-exec COMMAND {}  \;	is part of the execute option within the find command
+
+{}		is where the output of find will be inserted into COMMAND
+\;		signals to the find command that this is the end of whatever COMMAND is
+
+mv		is the move command, which has the format:
+
+mv  "path/to/file"  "path/to/destination/"
+
+$txtDir		is the variable txtDir which is the full pathname of where to put .txt files
+
+-exec mv {} $txtDir \;
+ executes mv {find output ie. path/to/file} path/to/destination/ \;
+COMMENT
+
+#TIMESTAMP FOR END OF MOVING TIME
+copy_time="$(date -u +%s.%N)"
+
+#SETTING VARIABLES FOR TOTAL TIME SPENT CONVERTING & MOVING
+elapsedt="$(bc <<<"$end_time-$start_time")"
+elapsed1="$(bc <<<"$copy_time-$end_time")"
+
+<<COMMENT
+    VARIABLE="$(commands)"
+    is basic formatt of setting variable
+
+    bc      bc stands for basic calculator as bash doesn't work with float numbers
+            you are required to use the bc command to deal with float numbers
+
+    <<<     this is a here-string, a variant of a here-document
+            this puts the output of "$VARIABLE" into the input of bc
+            more can be found here:
+            https://www.gnu.org/software/bash/manual/html_node/Redirections.html#Redirecting-Output
+
+    "$end_time-$start_time" might as well be "11.3-2.3"
+    end_time is timestamped as 1234567890.123456789 which is the
+    number of seconds and nanoseconds since 1970/01/01
+COMMENT
+
+#PRINT OUT OF NUMBER OF SECONDS FOR OPERATIONS
+echo "Total of $elapsedt seconds elapsed for .epub to .txt process"
+echo "Total of $elapsed1 seconds elapsed for copy process"
+
+#EXTRA - DIFFERENCE BETWEEN && & ; ||
+<<COMMENT
+    &&          is the logical "and" symbol
+
+	command1 && command2
+    command2 will be executed with successful completion of command1
+    ie. exit status of command1 must be 0 for command2 to run
+    using && instead of ; will put a halt to the program if something has gone wrong
+    instead of just executing each command in turn without regard to previous command
+
+    ||          is the logical "or" symbol
+
+    command1 || command2
+    command2 will only execute if command1 returns exit status of 0
+
+
+    &           is a control operator, which is placed at the end of a command
+                It signals that this command should be run in a subshell asynchronously
+
+    command1 & command2
+    command1 will be executed in a subshell separate from the current shell
+    command2 will be executed in current shell as if command1 didn't exist
+    command2 will run while command1 is also running, it will not wait for
+    command1 to finish or return an exit status
+
+    ;           this is the exit status of the previous command,
+                commands separated by this symbol will run one after another
+
+    command1 ; command2
+    command1 will be run and then command2 will be run sequentially
+    command1's exit status is the ; symbol. It forces the previous command to return
+    an exit status of 0, hence command2 will run after command1 has finished no matter
+    what the exit status of command1
+
+    &&  ||  have equal precedence, followed by   &  ;   which have equal precedence
+    COMMENT
