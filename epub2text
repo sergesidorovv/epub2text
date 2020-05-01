@@ -1,0 +1,23 @@
+#!/bin/bash
+path_books="/mnt/c/python/book" 					# path to directory with epubs for converting
+
+dir_txt="txt"								# name of new directory which will contain converted txt files
+
+cd "$path_books" &&							# cwd to books
+
+mkdir "$dir_txt" &&							# make new subdirectory called '$dir_txt'
+append_path="/$dir_txt/"						# append path of books to include subdirectory name
+path_txt="$path_books$append_path"					# path to new subdirectory
+
+time_start="$(date -u +%s.%N)"						# timestamp: start of conversion
+
+for book_epub in *.epub; do						# finds epubs in cwd ie. $path_books
+	book_txt="$(basename "$book_epub" .epub).txt"			# basename strips pathname: "path/to/book.epub" to "book"
+	echo "Converting $book_epub"; 					# prints "converting + nameOfBook"
+	epub2txt --raw "$book_epub" > "$dir_txt/$book_txt" & 		# 'epub2txt' converts epubs straight to terminal as text: https://github.com/kevinboone/epub2txt2
+done &&									# > pipes output of 'epub2txt' into new files that retain their filename appended with '.txt'
+									# instead of 'epub' and puts them straight into new subdirectory called '$dir_txt'
+
+time_end="$(date -u +%s.%N)"						# timestamp: end of conversion
+elapsedt="$(bc <<<"$time_end-$time_start")"				# total time of conversion
+echo "Total time $elapsedt seconds"					# print out total time
