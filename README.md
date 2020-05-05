@@ -18,7 +18,8 @@ to convert epubs into txt
 
 Otherwise it's easier to simply install as a bash script using the 'epub2text' file.
 
-you will have to go into the file and edit path_books='full/path/to/your/epub/folder' for it to work
+once installed type epub2text and press enter
+it asks you to enter full pathname to folder, so do that and press enter
 
 1.
 put the bash script 'epubtotext' into your #!/bin/bash folder or somewhere else into your $PATH.
